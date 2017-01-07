@@ -3,10 +3,13 @@
          ;文件说明：硬盘主引导扇区代码
          ;创建日期：2011-3-31 21:15 
          
-         mov ax,0xb800                 ;指向文本模式的显示缓冲区
+         mov ax,0xb800                 ;es寄存器指向文本模式的显示缓冲区
          mov es,ax
 
          ;以下显示字符串"Label offset:"
+         ;字符的显示属性分为两个字节
+         ;第一个字节是字符的ASCII码，第二个字节是字符的显示属性
+         ;下面的0x07表示字符以黑底白字，无闪烁无加亮的方式显示
          mov byte [es:0x00],'L'
          mov byte [es:0x01],0x07
          mov byte [es:0x02],'a'
@@ -35,12 +38,14 @@
          mov byte [es:0x19],0x07
 
          mov ax,number                 ;取得标号number的偏移地址
-         mov bx,10
+         mov bx,10                     ;bx保存被除数,div指令使用bx寄存器的值作为被除数
 
          ;设置数据段的基地址
          mov cx,cs
          mov ds,cx
 
+         ;32位除法中，被除数的低16位在ax寄存器中，高16位在dx寄存器中
+         ;前面已经将number的地址赋值给ax，下面将dx清零
          ;求个位上的数字
          mov dx,0
          div bx
@@ -67,10 +72,10 @@
          mov [0x7c00+number+0x04],dl   ;保存万位上的数字
 
          ;以下用十进制显示标号的偏移地址
-         mov al,[0x7c00+number+0x04]
-         add al,0x30
-         mov [es:0x1a],al
-         mov byte [es:0x1b],0x04
+         mov al,[0x7c00+number+0x04]    ;将计算结果送到al寄存器中
+         add al,0x30                    ;加上0x30得到这个数字的ASCII码
+         mov [es:0x1a],al               ;得到的ASCII码送到指定的位置
+         mov byte [es:0x1b],0x04        ;显示属性为黑底红字，无闪烁无加亮
          
          mov al,[0x7c00+number+0x03]
          add al,0x30
