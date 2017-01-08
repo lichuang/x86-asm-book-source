@@ -1,5 +1,5 @@
 
-ASMFILE=c05_mbr.asm
+ASMFILE=c07_mbr.asm
 
 all:$(ASMFILE)
 	nasm -f bin $(ASMFILE) -o mbr.bin
