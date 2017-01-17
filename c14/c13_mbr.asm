@@ -95,9 +95,6 @@
  setup:
          mov esi,[0x7c00+pgdt+0x02]         ;不可以在代码段内寻址pgdt，但可以
                                             ;通过4GB的段来访问
-
-         ;edi此时指向core程序的起始位置，所以下面紧接着做的都是加载core里面的段
-
          ;建立公用例程段描述符
          mov eax,[edi+0x04]                 ;公用例程代码段起始汇编地址
          mov ebx,[edi+0x08]                 ;核心数据段汇编地址
@@ -131,12 +128,10 @@
          mov [esi+0x38],eax
          mov [esi+0x3c],edx
 
-         ;加载core的描述符
          mov word [0x7c00+pgdt],63          ;描述符表的界限
                                         
          lgdt [0x7c00+pgdt]                  
 
-         ;edi+10是core中core_entry的位置，所以这里就是跳转到core里面执行
          jmp far [edi+0x10]  
        
 ;-------------------------------------------------------------------------------
