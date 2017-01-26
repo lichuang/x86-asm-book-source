@@ -337,12 +337,16 @@ make_gate_descriptor:                       ;构造门的描述符（调用门等）
          push ebx
          push ecx
       
+         ;组装门描述符的高32位
+         ;门描述符高32位的高16位是段内偏移量的高16位，低16位是段属性，现在已经通过CX寄存器传递过来了
          mov edx,eax
          and edx,0xffff0000                 ;得到偏移地址高16位 
          or dx,cx                           ;组装属性部分到EDX
        
+         ;组装门描述符的低32位
+         ;门描述符低32位的高16位是段选择子，低16位是段内偏移量的低16位
          and eax,0x0000ffff                 ;得到偏移地址低16位 
-         shl ebx,16                          
+         shl ebx,16                         ;ebx存放的是门代码所在段的选择子，左移16次，使段选择子位于它的高16位
          or eax,ebx                         ;组装段选择子部分
       
          pop ecx
@@ -362,10 +366,10 @@ SECTION core_data vstart=0                  ;系统核心的数据段
 
          ;符号地址检索表
          salt:
-         salt_1           db  '@PrintString'
-                     times 256-($-salt_1) db 0
-                          dd  put_string
-                          dw  sys_routine_seg_sel
+         salt_1           db  '@PrintString'      ; 描述字符串，偏移0
+                     times 256-($-salt_1) db 0    ; 256字节，多出来的填空
+                          dd  put_string          ; 函数地址，偏移位置256，大小为4字节
+                          dw  sys_routine_seg_sel ; 所在代码段的选择子，偏移位置260,大小2字节
 
          salt_2           db  '@ReadDiskData'
                      times 256-($-salt_2) db 0
@@ -749,15 +753,15 @@ append_to_tcb_link:                         ;在TCB链上追加任务控制块
                                              
          mov eax,[tcb_chain]                ;TCB表头指针
          or eax,eax                         ;链表为空？
-         jz .notcb 
+         jz .notcb                          ;在链表为空的情况下跳转到notcb
          
   .searc:
-         mov edx,eax
-         mov eax,[es: edx+0x00]
-         or eax,eax               
+         mov edx,eax                        ;eax寄存器数据存放到edx
+         mov eax,[es: edx+0x00]             ;0x00指向下一个TCB
+         or eax,eax                         ;判断是否为空，不为空的情况下继续往下搜索
          jnz .searc
          
-         mov [es: edx+0x00],ecx
+         mov [es: edx+0x00],ecx             ;保存最后一个TCB的下一个指针指向新创建的TCB
          jmp .retpc
          
   .notcb:       
@@ -815,6 +819,13 @@ start:
          push ecx   
          mov eax,[edi+256]                  ;该条目入口点的32位偏移地址 
          mov bx,[edi+260]                   ;该条目入口点的段选择子 
+         ;cx寄存器中存放的是门描述符高32位中的低16位
+         ;00000:参数个数是0
+         ;000: 固有格式
+         ;1100: 门描述符的TYPE
+         ;0:固有格式
+         ;11：DPL为3
+         ;1:有效位为1
          mov cx,1_11_0_1100_000_00000B      ;特权级3的调用门(3以上的特权级才
                                             ;允许访问)，0个参数(因为用寄存器
                                             ;传递参数，而没有用栈) 

@@ -273,6 +273,7 @@ set_up_gdt_descriptor:                      ;在GDT内安装一个新的描述符
          mov ebx,core_data_seg_sel          ;切换到核心数据段
          mov ds,ebx
 
+         ;将GDT寄存器的基地址和边界信息保存到pgdt这个内存位置
          sgdt [pgdt]                        ;以便开始处理GDT
 
          mov ebx,mem_0_4_gb_seg_sel
