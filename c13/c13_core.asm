@@ -283,10 +283,10 @@ set_up_gdt_descriptor:                      ;在GDT内安装一个新的描述符
          inc bx                             ;GDT总字节数，也是下一个描述符偏移 
          add ebx,[pgdt+2]                   ;下一个描述符的线性地址 
       
-         mov [es:ebx],eax
+         mov [es:ebx],eax                   ;安装传入的描述符
          mov [es:ebx+4],edx
       
-         add word [pgdt],8                  ;增加一个描述符的大小   
+         add word [pgdt],8                  ;[pgdt]位置是大小，因此这里就是增加一个描述符的大小   
       
          lgdt [pgdt]                        ;对GDT的更改生效 
        
@@ -438,7 +438,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          mov ecx,0x00409200                 ;字节粒度的数据段描述符
          call sys_routine_seg_sel:make_seg_descriptor
          call sys_routine_seg_sel:set_up_gdt_descriptor
-         mov [edi+0x04],cx                   
+         mov [edi+0x04],cx                            
 
          ;建立程序代码段描述符
          mov eax,edi
@@ -448,7 +448,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          mov ecx,0x00409800                 ;字节粒度的代码段描述符
          call sys_routine_seg_sel:make_seg_descriptor
          call sys_routine_seg_sel:set_up_gdt_descriptor
-         mov [edi+0x14],cx
+         mov [edi+0x14],cx                  ;回填加载程序重定向之后的代码段地址
 
          ;建立程序数据段描述符
          mov eax,edi
@@ -458,7 +458,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          mov ecx,0x00409200                 ;字节粒度的数据段描述符
          call sys_routine_seg_sel:make_seg_descriptor
          call sys_routine_seg_sel:set_up_gdt_descriptor
-         mov [edi+0x1c],cx
+         mov [edi+0x1c],cx                  ;回填加载程序重定向之后的数据段地址
 
          ;建立程序堆栈段描述符
          mov ecx,[edi+0x0c]                 ;4KB的倍率 
@@ -472,7 +472,7 @@ load_relocate_program:                      ;加载并重定位用户程序
          mov ecx,0x00c09600                 ;4KB粒度的堆栈段描述符
          call sys_routine_seg_sel:make_seg_descriptor
          call sys_routine_seg_sel:set_up_gdt_descriptor
-         mov [edi+0x08],cx
+         mov [edi+0x08],cx                  ;回填加载程序重定向之后的堆栈段地址
 
          ;重定位SALT
          mov eax,[edi+0x04]

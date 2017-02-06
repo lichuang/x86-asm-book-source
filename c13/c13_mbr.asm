@@ -95,14 +95,15 @@
  setup:
          mov esi,[0x7c00+pgdt+0x02]         ;不可以在代码段内寻址pgdt，但可以
                                             ;通过4GB的段来访问
+                                            ;之所以+0x02，是因为GDTR寄存器的格式，0x02之后才是GDR基址,0x00是界限
 
          ;edi此时指向core程序的起始位置，所以下面紧接着做的都是加载core里面的段
 
          ;建立公用例程段描述符
          mov eax,[edi+0x04]                 ;公用例程代码段起始汇编地址
          mov ebx,[edi+0x08]                 ;核心数据段汇编地址
-         sub ebx,eax
-         dec ebx                            ;公用例程段界限 
+         sub ebx,eax                        ;由于需要紧挨着，所以段的大小由后一个段地址-这个段的地址
+         dec ebx                            ;公用例程段界限，还要再减去1
          add eax,edi                        ;公用例程段基地址
          mov ecx,0x00409800                 ;字节粒度的代码段描述符
          call make_gdt_descriptor
